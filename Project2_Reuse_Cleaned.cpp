@@ -15,12 +15,19 @@
 #include <fstream>
 #include <array>
 
+/* Changes to the original file
+- Added `using namespace std;` to clean code a bit.
+- Added `using namespace std::chrono;` as well to clean up code a bit.
+- Added a couple comments.
 
+
+*/
 int main()
 {
 	// File parser. Probs include argument for file name/path.
 	std::ifstream configReader("config.txt");
 
+	// Checks for open file
 	if (!configReader.is_open()) {
 		std::cout << "Cannot find file.";
 		return 0;
@@ -164,6 +171,7 @@ int main()
 	}
 
 	configReader.close();
+	// End of Parser
 
 	//Just given paramaters:
 	/* Global Parameters (Vector) (Ints) -
