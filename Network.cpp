@@ -52,7 +52,7 @@ public:
     bool releaseFlag; // Flag to release the current head of prioq.
     vector<string> node_ips;// FIXME: implement vector of node information
     vector<int> node_port;
-
+    vector<int> socket_vector;
 
     // Constructors
     Network(vector<string> node_ips, vector<int> node_port)
@@ -66,8 +66,6 @@ public:
 
 
         // Establish Socket Connections
-        
-
 
     }
 
