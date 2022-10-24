@@ -48,13 +48,26 @@ public:
     priority_queue<Request, vector<Request>, prioQ_compare> prioQ;
     vector<int> lastTimeStamp; // Let numNodes = to size of node vector
     bool applicationRequest; // Flag to let know there is an application request
-    bool CSReady; // Flag to let application class know critical section can be entered
+    bool CS_ready; // Flag to let application class know critical section can be entered
     bool releaseFlag; // Flag to release the current head of prioq.
+    vector<string> node_ips;// FIXME: implement vector of node information
+    vector<int> node_port;
+
 
     // Constructors
-    Network()
+    Network(vector<string> node_ips, vector<int> node_port)
     {
-        this->lastTimeStamp.assign(numNodes,-1); // Creates vector with size numNodes, and fills with -1.
+        this->node_ips = node_ips;
+        this->node_port = node_port;
+        lastTimeStamp.assign(numNodes,-1); // Creates vector with size numNodes, and fills with -1.
+        applicationRequest = false;
+        CS_ready = false;
+        releaseFlag = false;
+
+
+        // Establish Socket Connections
+        
+
 
     }
 
@@ -68,6 +81,7 @@ public:
      */
     void operator()()
     {
+
         // Do something
     }
 
