@@ -15,12 +15,12 @@
 #include <fstream>
 #include <array>
 
-
 int main()
 {
 	// File parser. Probs include argument for file name/path.
 	std::ifstream configReader("config.txt");
 
+	// Checks for open file
 	if (!configReader.is_open()) {
 		std::cout << "Cannot find file.";
 		return 0;
@@ -164,6 +164,7 @@ int main()
 	}
 
 	configReader.close();
+	// End of Parser
 
 	//Just given paramaters:
 	/* Global Parameters (Vector) (Ints) -
