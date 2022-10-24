@@ -15,13 +15,6 @@
 #include <fstream>
 #include <array>
 
-/* Changes to the original file
-- Added `using namespace std;` to clean code a bit.
-- Added `using namespace std::chrono;` as well to clean up code a bit.
-- Added a couple comments.
-
-
-*/
 int main()
 {
 	// File parser. Probs include argument for file name/path.
