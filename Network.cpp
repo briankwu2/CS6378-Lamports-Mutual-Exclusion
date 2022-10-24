@@ -30,6 +30,11 @@ struct Request
     int time_stamp = -1;
     int node_id;
     /* data */
+
+    bool compare(const Request &compare)
+    {
+        return (this->time_stamp == compare.time_stamp) && (this->node_id == compare.node_id);
+    }
 };
 
 /**
@@ -37,7 +42,6 @@ struct Request
  * Provides a > than comparator to make sure the priority queue is a min heap in respect
  * to time stamp.
  * Includes a tie-breaker for equal time_stamps.
- * Does not include tie-breaker for node_id as that means something went wrong.
  */
 class prioQ_compare
 {
@@ -49,11 +53,13 @@ public:
         if (left.time_stamp == right.time_stamp)
         {
             return left.node_id >= right.node_id;
+
         }
         else // Otherwise, if the left value is larger than the right value, return true
         {
             return left.time_stamp > right.time_stamp;
         }
+        
     }
 };
 
@@ -109,8 +115,7 @@ public:
         int opt = 1;
         char buffer[1025] = { 0 };
         struct timeval tv;
-        struct hostent * host;
-
+        Request my_request;
 
         std::chrono::time_point<std::chrono::system_clock> start, end;
         fd_set readfds;
@@ -142,29 +147,11 @@ public:
                 //printf("Time Ran out ");
             }
 
-            // end = std::chrono::system_clock::now();
-            // std::chrono::duration<double> elapsed_seconds = end - start;
-
-            // if (isActive && elapsed_seconds.count() > minSendDelaySecs) {
-            //     start = std::chrono::system_clock::now();
-
-            //     send(sockets[nodeMsg], sentVectorClock.c_str(), strlen(sentVectorClock.c_str()), 0);
-                
-            //     sentMsgs = sentMsgs + 1;
-
-            //     //printf("Sent message to %d. Messages Sent: %d. Elapsed Time: %f. Delay: %f.\n", nodeCons.at(node).at(nodeMsg), sentMsgs, elapsed_seconds.count(), minSendDelaySecs);
-
-            //     //printf("Current vector clock: %s\n\n", vectorToString(vectorClock).c_str());
-
-            // }
-
             // Check every socket for if there is data. (Receive Portion)
             for (int i = 0; i < sockets.size(); i++) {
                 sd = sockets[i];
 
                 if (FD_ISSET(sd, &readfds)) {
-                    //FIXME: Unsure what to delete/remove from this section -----------------
-                    printf("Reading Message from %d\n", nodeCons.at(node).at(i));
                     if ((valread = read(sd, buffer, 1024)) == 0) {
                         //printf("Closing Socket1: %d\n", sd);
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
@@ -176,7 +163,6 @@ public:
                         close(sd);
                         sockets.erase(sockets.begin() + i);
                     }
-                    // -----------------------------------------------------------------------
                     else {
                         if (valread < 0)
                             //printf("Something went wrong! %s\n", strerror(errno));
@@ -218,7 +204,7 @@ public:
                         }
                         else // For reply message
                         {
-                            // Do nothing (you can remove this!)
+                            //FIXME: Do nothing (you can remove this!)
                         }
 
                     }
@@ -227,7 +213,6 @@ public:
 
             if (applicationRequest)
             {
-                Request my_request;
                 my_request.node_id = my_node_id;
                 my_request.time_stamp = ++lastTimeStamp.at(my_node_id); // FIXME: Does simply requesting count as an internal event itself? 
                                                                           // excluding the send and receive increments, for now it does count
@@ -244,6 +229,57 @@ public:
                     send(sockets.at(i),send_msg.c_str(), strlen(send_msg.c_str()), 0);
                 }
 
+            }
+
+            // Check the two conditions of Chandry Lamport's Mutual Exclusion Protocol to allow for access to critical section.
+
+            // First condition: check if my_request is in the priority queue and not in critical section
+            if (my_request.compare(prioQ.top()) && !CS_ready)
+            {
+                // Check for the second condition
+                // If my_requests time stamp is less than all other time stamps, including tie breaker
+                for (int i = 0; i < sockets.size();i++)
+                {
+                    if(i == my_node_id) // Ignore own time_stamp
+                    {
+                        continue;
+                    }
+
+                    else if (my_request.time_stamp < lastTimeStamp.at(i))
+                    {
+                        CS_ready = true; //FIXME: Look for concurrent solution, atomic flags?
+
+                    }
+                    else if (my_request.time_stamp == lastTimeStamp.at(i)) // Tie-breaker case
+                    {
+                        if(my_request.node_id < i) // Compare node_ids, lower one breaks the tie
+                        {
+                            CS_ready = true; // FIXME: Look for concurrent solution, atomic flags?
+
+                        }
+
+                    }
+                }
+
+            } 
+
+            if (releaseFlag)
+            {
+                // To send a release message to all other nodes
+                for (int i = 0; i < sockets.size();i++)
+                {
+                    // Ignore sending a message to ourselves (this node)
+                    if(i == my_node_id)
+                    {
+                        continue;
+                    }
+                    // Sends a request message to all other nodes
+                    string send_msg = "release " + to_string(++lastTimeStamp.at(my_node_id)) + ' ' + to_string(my_node_id); // Increments Lamport's logical clock
+                    send(sockets.at(i),send_msg.c_str(), strlen(send_msg.c_str()), 0);
+                }
+                prioQ.pop();
+
+                releaseFlag = false; //FIXME: Make it concurrent/thread-safe
             }
 
         }//End of while loop
