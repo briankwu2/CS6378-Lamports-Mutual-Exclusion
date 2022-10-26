@@ -25,8 +25,8 @@
 
 int main(int argc, char** argv)
 {
-	// Checking that there is only one argument
-	if(argc != 2){
+	// Checking that there is only two arguments
+	if(argc != 3){
 		std::cout << "Wrong number of arguments." << std::endl;
 		return 0;
 	}
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
 
 	}*/
 
- 
+	node = stoi(argv[2]); // For local testing
 	
 	std :: cout << "NodeID: " << node << std::endl;
 
