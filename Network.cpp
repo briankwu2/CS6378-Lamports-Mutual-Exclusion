@@ -29,9 +29,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id)
     this->node_ports = node_port;
     this->my_node_id = my_node_id;
     lastTimeStamp.assign(sockets.size(),-1); // Creates vector with number of nodes, and fills with -1.
-    applicationRequest = false;
-    CS_ready = false;
-    releaseFlag = false;
+
 
 
 
@@ -193,7 +191,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id)
  * i.e. thread t1(Network(), params)
  * Will implement Chandry Lamport's Mutual Exclusion Algorithm
  */
-void Network::operator()()
+void Network::operator()(bool * applicationRequest, bool * CS_ready, bool * releaseFlag)
 {
     int master_socket, addrlen, new_socket, activity, i, valread, sd;
     int sock = 0;
@@ -303,7 +301,7 @@ void Network::operator()()
             }
         }//End of recieve loop
 
-        if (applicationRequest)
+        if (*applicationRequest)
         {
             my_request.node_id = my_node_id;
             my_request.time_stamp = ++lastTimeStamp.at(my_node_id); // FIXME: Does simply requesting count as an internal event itself? 
@@ -339,14 +337,14 @@ void Network::operator()()
 
                 else if (my_request.time_stamp < lastTimeStamp.at(i))
                 {
-                    CS_ready = true; //FIXME: Look for concurrent solution, atomic flags?
+                    *CS_ready = true; //FIXME: Look for concurrent solution, atomic flags?
 
                 }
                 else if (my_request.time_stamp == lastTimeStamp.at(i)) // Tie-breaker case
                 {
                     if(my_request.node_id < i) // Compare node_ids, lower one breaks the tie
                     {
-                        CS_ready = true; // FIXME: Look for concurrent solution, atomic flags?
+                        *CS_ready = true; // FIXME: Look for concurrent solution, atomic flags?
 
                     }
 
@@ -355,7 +353,7 @@ void Network::operator()()
 
         } 
 
-        if (releaseFlag)
+        if (*releaseFlag)
         {
             // To send a release message to all other nodes
             for (int i = 0; i < sockets.size();i++)
@@ -371,7 +369,7 @@ void Network::operator()()
             }
             prioQ.pop();
 
-            releaseFlag = false; //FIXME: Make it concurrent/thread-safe
+            *releaseFlag = false; //FIXME: Make it concurrent/thread-safe
         }
 
     }//End of while loop
