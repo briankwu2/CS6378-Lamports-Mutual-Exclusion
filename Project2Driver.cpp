@@ -18,6 +18,7 @@
 #include <fstream>
 #include <array>
 #include <thread>
+#include <functional>
 
 #include "Request.h"
 #include "Network.h"
@@ -257,15 +258,15 @@ int main(int argc, char** argv)
 	*cs_ready = false;
 	*cs_leave = false;
 
-  std::cout << "Creating object." << std::endl;
+  	std::cout << "Creating object." << std::endl;
 
 	Network net1(node_ips, node_ports, node, cs_enter, cs_ready, cs_leave);
 
-  std::cout << "Created object." << std::endl;
+  	std::cout << "Created object." << std::endl;
 
 	std::thread t1(std::bind(&Network::netty, net1));
 
-  std::cout << "Created thread." << std::endl;
+	std::cout << "Created thread." << std::endl;
 
 	srand(time(NULL));
 
@@ -331,7 +332,8 @@ int main(int argc, char** argv)
 		std::cout << "Time should wait: " << interRequestDelayRand << std::endl;
 
 	}
-  delete cs_enter;
+
+  	delete cs_enter;
 	delete cs_ready;
 	delete cs_leave;
 }
