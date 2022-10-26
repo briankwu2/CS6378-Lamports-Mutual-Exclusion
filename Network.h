@@ -27,11 +27,15 @@ public:
     int my_node_id;
     priority_queue<Request, vector<Request>, prioQ_compare> prioQ;
     vector<int> lastTimeStamp; // vector of most recent time stamps from other nodes
+    bool* applicationRequest; // Flag to let know there is an application request
+    bool* CS_ready; // Flag to let application class know critical section can be entered
+    bool* releaseFlag; // Flag to release the current head of prioq.
     vector<string> node_ips;// FIXME: implement vector of node information
     vector<int> node_ports;
     vector<int> sockets;
+    
 
-   Network(vector<string> node_ips, vector<int> node_port, int my_node_id);
+   Network(vector<string> node_ips, vector<int> node_port, int my_node_id, bool * applicationRequest, bool * CS_ready, bool * releaseFlag);
 
     // 
     /**
@@ -41,7 +45,7 @@ public:
      * i.e. thread t1(Network(), params)
      * Will implement Chandry Lamport's Mutual Exclusion Algorithm
      */
-    void operator()(bool * applicationRequest, bool * CS_ready, bool * releaseFlag);
+    void netty();
 
 
 };

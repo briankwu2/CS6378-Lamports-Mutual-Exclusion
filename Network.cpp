@@ -23,14 +23,16 @@
 using namespace std;
 
 // Constructors
-Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id)
+Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id, bool * applicationRequest, bool * CS_ready, bool * releaseFlag)
 {
     this->node_ips = node_ips;
     this->node_ports = node_port;
-    this->my_node_id = my_node_id;
+	this->my_node_id = my_node_id;
+	this->applicationRequest = applicationRequest;
+	this->CS_ready = CS_ready;
+	this->releaseFlag = releaseFlag;
     lastTimeStamp.assign(sockets.size(),-1); // Creates vector with number of nodes, and fills with -1.
-
-
+	std::cout << "HI" << std::endl;
 
 
     // Establish Socket Connections
@@ -42,16 +44,12 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id)
 	int sock = 0;
 	int client_fd = 0;
 	int max_sd = 0;
-    int num_nodes = node_ips.size();
+	int num_nodes = node_ips.size();
 	struct sockaddr_in address;
 	struct sockaddr_in serv_addr;
 	int opt = 1;
 	char buffer[1025] = { 0 };
 	struct hostent * host;
-
-
-    // Hard Coding Global Parameters
-
 
 	// Initializing and setting up different variables needed.
 
@@ -191,7 +189,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id)
  * i.e. thread t1(Network(), params)
  * Will implement Chandry Lamport's Mutual Exclusion Algorithm
  */
-void Network::operator()(bool * applicationRequest, bool * CS_ready, bool * releaseFlag)
+void Network::netty()
 {
     int master_socket, addrlen, new_socket, activity, i, valread, sd;
     int sock = 0;
@@ -268,7 +266,7 @@ void Network::operator()(bool * applicationRequest, bool * CS_ready, bool * rele
                     message.erase(0,message.find(' ') + 1); // Erase the first token
                     time_stamp = stoi(message.substr(0,message.find(' '))); // Find time_stamp
                     message.erase(0,message.find(' ') + 1); // Erase the second token "<time_stamp>"
-                    node_id = stoi(message.substr(0,message.find(' '))); // Find node_id
+                    node_id = stoi(message); // Find node_id
                     
                     // Picks the larger time stamp and adds to it
                     lastTimeStamp.at(my_node_id) = max(time_stamp, lastTimeStamp.at(my_node_id)) + 1;
@@ -324,7 +322,7 @@ void Network::operator()(bool * applicationRequest, bool * CS_ready, bool * rele
         // Check the two conditions of Chandry Lamport's Mutual Exclusion Protocol to allow for access to critical section.
 
         // First condition: check if my_request is in the priority queue and not in critical section
-        if (my_request.compare(prioQ.top()) && !CS_ready)
+        if (my_request.compare(prioQ.top()) && !*CS_ready)
         {
             // Check for the second condition
             // If my_requests time stamp is less than all other time stamps, including tie breaker
@@ -389,3 +387,10 @@ void showpq(priority_queue<Request, vector<Request>, prioQ_compare> prioQ)
     }
 };
 
+/**
+ * @brief Tests the PriorityQueue
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
