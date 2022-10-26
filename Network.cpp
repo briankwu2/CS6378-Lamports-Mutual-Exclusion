@@ -26,14 +26,157 @@ using namespace std;
 Network::Network(vector<string> node_ips, vector<int> node_port)
 {
     this->node_ips = node_ips;
-    this->node_port = node_port;
+    this->node_ports = node_port;
     lastTimeStamp.assign(sockets.size(),-1); // Creates vector with number of nodes, and fills with -1.
     applicationRequest = false;
     CS_ready = false;
     releaseFlag = false;
 
 
+
     // Establish Socket Connections
+
+    //Socket Creation Section
+
+	//Socket variables required
+	int master_socket, addrlen, new_socket, activity, i, valread, sd;
+	int sock = 0;
+	int client_fd = 0;
+	int max_sd = 0;
+    int num_nodes = node_ips.size();
+	struct sockaddr_in address;
+	struct sockaddr_in serv_addr;
+	int opt = 1;
+	char buffer[1025] = { 0 };
+	struct hostent * host;
+
+	// Initializing and setting up different variables needed.
+
+	// Just used in a few cases is a way to convert nodeID to socket.
+	std::map<int, int> SocketToNodeId;
+
+	// Setting up the listening socket.
+	fd_set readfds;
+
+	if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+		perror("socket failed");
+		exit(EXIT_FAILURE);
+	}
+
+	if (setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0) {
+		perror("setsockopt");
+		exit(EXIT_FAILURE);
+	}
+
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons(node_ports.at(my_node_id));
+
+	if (bind(master_socket, (struct sockaddr*)&address, sizeof(address)) < 0) {
+		perror("bind failed");
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Listener on port %d \n", node_ports.at(my_node_id));
+
+	if (listen(master_socket, 3) < 0) {
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
+
+	addrlen = sizeof(address);
+	puts("Waiting for connections ...");
+
+	// Listening for socket connections up until nodeID. (So if nodeID = 3 with cons 0, 1, 4. Then it will listen for 2 connections.
+	// Due to the logic it has to be 0 and 1 that are sent. Order doesn't really matter.
+
+	//Needs to be changed to not use nodeCons.
+	while ( sockets.size() < my_node_id ) {
+		if ((new_socket = accept(master_socket, (struct sockaddr*)&address, (socklen_t*)&addrlen)) < 0) {
+			perror("accept");
+			exit(EXIT_FAILURE);
+		}
+		sockets.push_back(new_socket);
+	}
+
+	puts("Done waiting...");
+
+	sockets.push_back(-1);
+
+	// After having listened for all the lower nodeIds then tries to initialize the connection for all nodeIds greater than it.
+	while (sockets.size() < num_nodes) {
+
+		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_port = htons(node_ports.at(sockets.size()));
+		host = gethostbyname(node_ips[sockets.size()].c_str());
+
+		memcpy(&serv_addr.sin_addr, host->h_addr_list[0], host->h_length);
+
+		if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+			printf("\n Socket creation error \n");
+			exit(EXIT_FAILURE);
+		}
+
+		// Tries connecting. If fails then wait for 300ms and try again.
+		if ((client_fd
+			= connect(sock, (struct sockaddr*)&serv_addr,
+				sizeof(serv_addr)))
+			< 0) {
+			//printf("%s\n", strerror(errno));
+			//printf("\nConnection Failed \n");
+			usleep(300000);
+		}
+		else {
+			sockets.push_back(sock);
+		}
+
+	}
+
+	puts("Done connecting...");
+
+	puts("Checking all connections...");
+
+	std::string check_send_msg = "0";
+
+	// Sending a test message to all other nodes.
+	for (int send_check_conn : sockets){
+
+		if(send_check_conn!=-1){
+			send(send_check_conn, check_send_msg.c_str(), strlen(check_send_msg.c_str()), 0);
+		}
+	
+	}
+
+	int recv_check_count = 0;
+
+	// Checking all are recieved. Will only get all recieved if all other nodes have finished doing connections.
+	while(recv_check_count < num_nodes){
+
+		if(sockets.at(recv_check_count) != -1){
+			valread = read(sockets.at(recv_check_count), buffer, 1024);
+		}else{
+			recv_check_count++;
+			continue;
+		}
+
+		buffer[valread] = '\0';
+
+		// Just converting the c_str() from socket into a string.
+		std::string temp_recv_check(buffer);
+
+		if(temp_recv_check.at(0) == '0') recv_check_count++;
+	
+	}
+
+	puts("Checked with all other nodes.");
+
+	//usleep(300000);
+
+	for (int socketClose : sockets){
+
+		close(socketClose);
+
+	}
 
 }
 
@@ -56,12 +199,15 @@ void Network::operator()()
     int opt = 1;
     char buffer[1025] = { 0 };
     struct timeval tv;
+	struct hostent * host;
     Request my_request;
 
-    std::chrono::time_point<std::chrono::system_clock> start, end;
+    // FIXME: May be unnecessary?
+	// Just used in a few cases is a way to convert nodeID to socket.
+	std::map<int, int> SocketToNodeId;
+
     fd_set readfds;
 
-    start = chrono::system_clock::now();
     while(true)
     {
         // Setup for listening

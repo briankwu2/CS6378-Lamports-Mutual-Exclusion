@@ -10,7 +10,8 @@ struct Request
     // Fields
     int time_stamp;
     int node_id;
-
+    
+    Request();
     //Functions
     bool compare(const Request &compare);
 };

@@ -31,8 +31,9 @@ public:
     bool CS_ready; // Flag to let application class know critical section can be entered
     bool releaseFlag; // Flag to release the current head of prioq.
     vector<string> node_ips;// FIXME: implement vector of node information
-    vector<int> node_port;
+    vector<int> node_ports;
     vector<int> sockets;
+    
 
    Network(vector<string> node_ips, vector<int> node_port);
 
