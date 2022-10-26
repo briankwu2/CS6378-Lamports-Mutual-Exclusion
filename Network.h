@@ -45,7 +45,7 @@ public:
      * i.e. thread t1(Network(), params)
      * Will implement Chandry Lamport's Mutual Exclusion Algorithm
      */
-    void netty();
+    void execute_protocol();
 
 
 };

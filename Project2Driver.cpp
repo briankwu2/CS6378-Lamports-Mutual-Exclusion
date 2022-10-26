@@ -246,6 +246,8 @@ int main(int argc, char** argv)
 
 	}*/
 
+	node_ips.clear();
+	node_ips.assign(4, "localhost");
 	std :: cout << "NodeID: " << node << std::endl;
 
 	configReader.close();
@@ -264,7 +266,7 @@ int main(int argc, char** argv)
 
   	std::cout << "Created object." << std::endl;
 
-	std::thread t1(std::bind(&Network::netty, net1));
+	std::thread t1(std::bind(&Network::execute_protocol, net1));
 
 	std::cout << "Created thread." << std::endl;
 

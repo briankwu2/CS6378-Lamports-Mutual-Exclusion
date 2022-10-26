@@ -189,18 +189,14 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
  * i.e. thread t1(Network(), params)
  * Will implement Chandry Lamport's Mutual Exclusion Algorithm
  */
-void Network::netty()
+void Network::execute_protocol()
 {
-    int master_socket, addrlen, new_socket, activity, i, valread, sd;
-    int sock = 0;
-    int client_fd = 0;
+    int addrlen, activity, i, valread, sd;
     int max_sd = 0;
     struct sockaddr_in address;
-    struct sockaddr_in serv_addr;
     int opt = 1;
     char buffer[1025] = { 0 };
     struct timeval tv;
-	struct hostent * host;
     Request my_request;
 
     // FIXME: May be unnecessary?
@@ -262,7 +258,8 @@ void Network::netty()
                     int time_stamp = -1;
                     int node_id = -1;
 
-                    // Message should be structured in a "name <time_stamp> <node_id>"
+                    // Message should be structured in a "type_of_msg <time_stamp> <node_id>"
+                    string type_of_request = message.substr(0,message.find(' '));
                     message.erase(0,message.find(' ') + 1); // Erase the first token
                     time_stamp = stoi(message.substr(0,message.find(' '))); // Find time_stamp
                     message.erase(0,message.find(' ') + 1); // Erase the second token "<time_stamp>"
@@ -272,7 +269,7 @@ void Network::netty()
                     lastTimeStamp.at(my_node_id) = max(time_stamp, lastTimeStamp.at(my_node_id)) + 1;
 
                     // Check for request, reply, or release message
-                    if(message.substr(0,7).compare("request"))
+                    if(type_of_request.compare("request"))
                     {
                         Request req;
                         req.time_stamp = time_stamp;
@@ -286,7 +283,7 @@ void Network::netty()
 
                     }
                     // Pops the first request off of the priority queue
-                    else if (message.substr(0,7).compare("release"))
+                    else if (type_of_request.compare("release"))
                     {
                         prioQ.pop();
                     }
