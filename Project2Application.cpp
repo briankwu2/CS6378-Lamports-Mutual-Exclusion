@@ -28,7 +28,7 @@ int main()
 
 	double interRequestDelay = 20.0/1000.0;
 	double csExeTime = 10.0/1000.0;
-	int maxRequests = 1000;
+	int maxRequests = 10;
 
 	//double interRequestDelay = global_parameters[1]/1000.0;
 	//double csExeTime = global_parameters[2]/1000.0;
@@ -49,7 +49,6 @@ int main()
 		//rand() % (sockets.size());
 
 		csExeTimeRand = csExeTime+((double)(rand() % 50))/1000.0;
-
 		interRequestDelayRand = interRequestDelay+((double)(rand() % 50))/1000.0;
 
 		std::cout << "Trying request." << std::endl;
@@ -63,12 +62,13 @@ int main()
 		end_cs = std::chrono::system_clock::now();
 		std::chrono::duration<double> elapsed_seconds_cs = end_cs - start_cs;
 
-		while(elapsed_seconds_cs.count() < csExeTime){
+		while(elapsed_seconds_cs.count() < csExeTimeRand){
 			usleep(100);
 			end_cs = std::chrono::system_clock::now();
-			std::chrono::duration<double> elapsed_seconds_cs = end_cs - start_cs;
+			elapsed_seconds_cs = end_cs - start_cs;
 		}
 		std::cout << "Time executing: " << elapsed_seconds_cs.count() << std::endl;
+		std::cout << "Time should execute: " << csExeTimeRand << std::endl;
 		std::cout << "Done executing." << std::endl;
 
 		//cs-leave();
@@ -77,12 +77,13 @@ int main()
 		end_request = std::chrono::system_clock::now();
 		std::chrono::duration<double> elapsed_seconds_request = end_request - start_request;
 		
-		while(elapsed_seconds_request.count() < interRequestDelay){
+		while(elapsed_seconds_request.count() < interRequestDelayRand){
 			usleep(100);
 			end_request = std::chrono::system_clock::now();
 			elapsed_seconds_request = end_request - start_request;
 		}
 		std::cout << "Time waited: " << elapsed_seconds_request.count() << std::endl;
+		std::cout << "Time should wait: " << interRequestDelayRand << std::endl;
 
 	}
 
