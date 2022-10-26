@@ -247,6 +247,7 @@ int main(int argc, char** argv)
 	}*/
 
  
+	
 	std :: cout << "NodeID: " << node << std::endl;
 
 	configReader.close();

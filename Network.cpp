@@ -183,9 +183,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 
 // 
 /**
- * @brief 
- * Override the () operator for the purpose of threading
- * Will be called by passing it in to a thread object
+ * @brief Function to be called for threading. Executes CL Protocol.
  * i.e. thread t1(Network(), params)
  * Will implement Chandry Lamport's Mutual Exclusion Algorithm
  */
