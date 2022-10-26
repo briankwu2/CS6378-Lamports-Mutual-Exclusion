@@ -23,10 +23,11 @@
 using namespace std;
 
 // Constructors
-Network::Network(vector<string> node_ips, vector<int> node_port)
+Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id)
 {
     this->node_ips = node_ips;
     this->node_ports = node_port;
+    this->my_node_id = my_node_id;
     lastTimeStamp.assign(sockets.size(),-1); // Creates vector with number of nodes, and fills with -1.
     applicationRequest = false;
     CS_ready = false;
@@ -49,6 +50,10 @@ Network::Network(vector<string> node_ips, vector<int> node_port)
 	int opt = 1;
 	char buffer[1025] = { 0 };
 	struct hostent * host;
+
+
+    // Hard Coding Global Parameters
+
 
 	// Initializing and setting up different variables needed.
 
@@ -386,41 +391,3 @@ void showpq(priority_queue<Request, vector<Request>, prioQ_compare> prioQ)
     }
 };
 
-/**
- * @brief Tests the PriorityQueue
- * 
- * @param argc 
- * @param argv 
- * @return int 
- */
-
-int main(int argc, char const *argv[])
-{
-    priority_queue<Request, vector<Request>, prioQ_compare> prioq;
-    srand(time(NULL));
-
-    // Tests prioQ
-    for (int i=0; i < 10; i++)
-    {
-        Request temp;
-        temp.node_id = rand() % 100;
-        temp.time_stamp = rand() % 100;
-        prioq.push(temp);
-    }
-
-    // Tests equivalent time_stamp case
-
-    Request temp;
-    temp.node_id = 30;
-    temp.time_stamp = 50;
-
-    Request temp2;
-    temp2.node_id = 62;
-    temp2.time_stamp = 50;
-
-    prioq.push(temp);
-    prioq.push(temp2);
-
-    showpq(prioq);
-    return 0;
-}

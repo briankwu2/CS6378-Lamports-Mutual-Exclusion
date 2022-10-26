@@ -33,9 +33,8 @@ public:
     vector<string> node_ips;// FIXME: implement vector of node information
     vector<int> node_ports;
     vector<int> sockets;
-    
 
-   Network(vector<string> node_ips, vector<int> node_port);
+   Network(vector<string> node_ips, vector<int> node_port, int my_node_id);
 
     // 
     /**
