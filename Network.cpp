@@ -191,10 +191,9 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
  */
 void Network::execute_protocol()
 {
-    int addrlen, activity, i, valread, sd;
+    int addrlen, activity, valread, sd;
     int max_sd = 0;
     struct sockaddr_in address;
-    int opt = 1;
     char buffer[1025] = { 0 };
     struct timeval tv;
     Request my_request;
@@ -294,7 +293,7 @@ void Network::execute_protocol()
 
                 }
             }
-        }//End of recieve loop
+        }//End of receive loop
 
         if (*applicationRequest)
         {
@@ -383,11 +382,3 @@ void showpq(priority_queue<Request, vector<Request>, prioQ_compare> prioQ)
         prioQ.pop(); // Pops off the prioQ
     }
 };
-
-/**
- * @brief Tests the PriorityQueue
- * 
- * @param argc 
- * @param argv 
- * @return int 
- */

@@ -246,8 +246,7 @@ int main(int argc, char** argv)
 
 	}*/
 
-	node_ips.clear();
-	node_ips.assign(4, "localhost");
+ 
 	std :: cout << "NodeID: " << node << std::endl;
 
 	configReader.close();
