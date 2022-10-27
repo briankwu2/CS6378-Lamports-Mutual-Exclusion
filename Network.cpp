@@ -59,7 +59,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 	// Setting up the listening socket.
 	fd_set readfds;
 
-	if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+	if ((master_socket = socket(AF_LOCAL, SOCK_STREAM, 0)) == 0) {
 		perror("socket failed");
 		exit(EXIT_FAILURE);
 	}
@@ -69,7 +69,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 		exit(EXIT_FAILURE);
 	}
 
-	address.sin_family = AF_INET;
+	address.sin_family = AF_LOCAL;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(node_ports.at(my_node_id));
 
@@ -107,13 +107,11 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 	// After having listened for all the lower nodeIds then tries to initialize the connection for all nodeIds greater than it.
 	while (sockets.size() < num_nodes) {
 
-		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_family = AF_LOCAL;
 		serv_addr.sin_port = htons(node_ports.at(sockets.size()));
 		host = gethostbyname(node_ips[sockets.size()].c_str());
 
-		memcpy(&serv_addr.sin_addr, host->h_addr_list[0], host->h_length);
-
-		if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		if ((sock = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0) {
 			printf("\n Socket creation error \n");
 			exit(EXIT_FAILURE);
 		}

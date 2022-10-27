@@ -19,12 +19,14 @@
 #include <array>
 #include <thread>
 #include <functional>
+#include <csignal>
 
 #include "Request.h"
 #include "Network.h"
 
 int main(int argc, char** argv)
 {
+
 	// Checking that there is only two arguments
 	if(argc != 3){
 		std::cout << "Wrong number of arguments." << std::endl;
@@ -247,7 +249,9 @@ int main(int argc, char** argv)
 	}*/
 
 	node = stoi(argv[2]); // For local testing
-	
+    node_ips.clear();
+    node_ips.assign(4, "localhost");
+
 	std :: cout << "NodeID: " << node << std::endl;
 
 	configReader.close();
