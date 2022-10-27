@@ -31,7 +31,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 	this->applicationRequest = applicationRequest;
 	this->CS_ready = CS_ready;
 	this->releaseFlag = releaseFlag;
-    lastTimeStamp.assign(sockets.size(),-1); // Creates vector with number of nodes, and fills with -1.
+    lastTimeStamp.assign(node_port.size(),-1); // Creates vector with number of nodes, and fills with -1.
 	std::cout << "HI" << std::endl;
 
 
@@ -173,11 +173,11 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 
 	//usleep(300000);
 
-	for (int socketClose : sockets){
+	/*for (int socketClose : sockets){
 
 		close(socketClose);
 
-	}
+	}*/
 
 }
 
@@ -201,7 +201,7 @@ void Network::execute_protocol()
 	std::map<int, int> SocketToNodeId;
 
     fd_set readfds;
-
+    
     while(true)
     {
         // Setup for listening
@@ -213,7 +213,7 @@ void Network::execute_protocol()
         for (int i = 0; i < sockets.size(); i++) {
             sd = sockets[i];
             FD_SET(sd, &readfds);
-
+            
             if (sd > max_sd)
                 max_sd = sd;
         }
@@ -310,6 +310,7 @@ void Network::execute_protocol()
                 string send_msg = "request " + to_string(++lastTimeStamp.at(my_node_id)) + ' ' + to_string(my_node_id); // Increments Lamport's logical clock
                 send(sockets.at(i),send_msg.c_str(), strlen(send_msg.c_str()), 0);
             }
+            *applicationRequest = false;
 
         }
 
