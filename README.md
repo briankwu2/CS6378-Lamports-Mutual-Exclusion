@@ -1,3 +1,24 @@
+# Group Members
+Brian Wu bkw180001
+Nick Herzberg ndh180001
+
+# Compilation
+In order to run the current implementation, compile using the command
+```cpp
+g++ -std=c++11 *.cpp -pthread
+```
+Then run:
+```cpp
+./a.out configBase.txt 
+```
+on dcXX.utdallas.edu machines 1 to 4, or alternatively change the config file
+to match however many machines desired and change up the parameters as necessary.
+
+## Current Issues
+- Currently, concurrency may be an issue due to threading. Atomic Booleans will need to be implemented to attempt to solve this issue.
+- "Reply" messages that are sent are sometimes being sent with an extra value that is not supposed to be there. Currently unknown why, but may be related to concurrency issues.
+
+
 # CS6378-Lamports-Mutual-Exclusion
 Advanced Operating Systems Project that implements Lamport's Mutual Exclusion algorithm.
 
