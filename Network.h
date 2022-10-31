@@ -33,7 +33,7 @@ public:
     vector<string> node_ips;
     vector<int> node_ports;
     vector<int> sockets;
-    
+    int master_socket;
 
     // Constructor
    Network(vector<string> node_ips, vector<int> node_port, int my_node_id, bool * applicationRequest, bool * CS_ready, bool * releaseFlag);
@@ -46,8 +46,9 @@ public:
      * Will implement Chandry Lamport's Mutual Exclusion Algorithm
      */
     void execute_protocol();
+    void closeSockets(vector<int>sockets, int masterSock);
 
-
+    ~Network();
 };
 
 /**
@@ -56,3 +57,4 @@ public:
  * @param prioQ 
  */
 void showpq(priority_queue<Request, vector<Request>, prioQ_compare> prioQ);
+
