@@ -22,9 +22,22 @@
 
 using namespace std;
 
+void Network::closeSockets(vector<int>sockets, int masterSock)
+{
+    if (!sockets.empty())
+    {
+        for (int i = 0; i < sockets.size();i++)
+        {
+            close(sockets.at(i));
+        }
+    }
+    close(masterSock);
+}
+
 // Constructors
 Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id, bool * applicationRequest, bool * CS_ready, bool * releaseFlag)
 {
+    
     this->node_ips = node_ips;
     this->node_ports = node_port;
 	this->my_node_id = my_node_id;
@@ -32,8 +45,6 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 	this->CS_ready = CS_ready;
 	this->releaseFlag = releaseFlag;
     lastTimeStamp.assign(node_port.size(),-1); // Creates vector with number of nodes, and fills with -1.
-	std::cout << "HI" << std::endl;
-
 
     // Establish Socket Connections
 
@@ -61,11 +72,13 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 
 	if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
 		perror("socket failed");
+        closeSockets(sockets, master_socket);
 		exit(EXIT_FAILURE);
 	}
 
-	if (setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0) {
+	if (setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
 		perror("setsockopt");
+        closeSockets(sockets, master_socket);
 		exit(EXIT_FAILURE);
 	}
 
@@ -75,6 +88,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 
 	if (bind(master_socket, (struct sockaddr*)&address, sizeof(address)) < 0) {
 		perror("bind failed");
+        closeSockets(sockets, master_socket);
 		exit(EXIT_FAILURE);
 	}
 
@@ -82,11 +96,14 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 
 	if (listen(master_socket, 3) < 0) {
 		perror("listen");
+        closeSockets(sockets, master_socket);
 		exit(EXIT_FAILURE);
 	}
 
 	addrlen = sizeof(address);
 	puts("Waiting for connections ...");
+
+    this->master_socket = master_socket;
 
 	// Listening for socket connections up until nodeID. (So if nodeID = 3 with cons 0, 1, 4. Then it will listen for 2 connections.
 	// Due to the logic it has to be 0 and 1 that are sent. Order doesn't really matter.
@@ -95,6 +112,7 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 	while ( sockets.size() < my_node_id ) {
 		if ((new_socket = accept(master_socket, (struct sockaddr*)&address, (socklen_t*)&addrlen)) < 0) {
 			perror("accept");
+            closeSockets(sockets, master_socket);
 			exit(EXIT_FAILURE);
 		}
 		sockets.push_back(new_socket);
@@ -110,8 +128,6 @@ Network::Network(vector<string> node_ips, vector<int> node_port, int my_node_id,
 		serv_addr.sin_family = AF_INET;
 		serv_addr.sin_port = htons(node_ports.at(sockets.size()));
 		host = gethostbyname(node_ips[sockets.size()].c_str());
-
-		memcpy(&serv_addr.sin_addr, host->h_addr_list[0], host->h_length);
 
 		if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 			printf("\n Socket creation error \n");
@@ -264,9 +280,10 @@ void Network::execute_protocol()
                     
                     // Picks the larger time stamp and adds to it
                     lastTimeStamp.at(my_node_id) = max(time_stamp, lastTimeStamp.at(my_node_id)) + 1;
+                    lastTimeStamp.at(i) = time_stamp;
 
                     // Check for request, reply, or release message
-                    if(type_of_request.compare("request"))
+                    if(type_of_request.compare("request") == 0)
                     {
                         Request req;
                         req.time_stamp = time_stamp;
@@ -280,7 +297,7 @@ void Network::execute_protocol()
 
                     }
                     // Pops the first request off of the priority queue
-                    else if (type_of_request.compare("release"))
+                    else if (type_of_request.compare("release") == 0)
                     {
                         prioQ.pop();
                     }
@@ -317,11 +334,12 @@ void Network::execute_protocol()
         // Check the two conditions of Chandry Lamport's Mutual Exclusion Protocol to allow for access to critical section.
 
         // First condition: check if my_request is in the priority queue and not in critical section
-        if (my_request.compare(prioQ.top()) && !*CS_ready)
+        if (!(*CS_ready) && !prioQ.empty() && my_request.compare(prioQ.top()))
         {
             // Check for the second condition
             // If my_requests time stamp is less than all other time stamps, including tie breaker
-            for (int i = 0; i < sockets.size();i++)
+            
+            for (int i = 0; i < sockets.size(); i++)
             {
                 if(i == my_node_id) // Ignore own time_stamp
                 {
@@ -331,14 +349,12 @@ void Network::execute_protocol()
                 else if (my_request.time_stamp < lastTimeStamp.at(i))
                 {
                     *CS_ready = true; //FIXME: Look for concurrent solution, atomic flags?
-
                 }
                 else if (my_request.time_stamp == lastTimeStamp.at(i)) // Tie-breaker case
                 {
                     if(my_request.node_id < i) // Compare node_ids, lower one breaks the tie
                     {
                         *CS_ready = true; // FIXME: Look for concurrent solution, atomic flags?
-
                     }
 
                 }
@@ -381,3 +397,9 @@ void showpq(priority_queue<Request, vector<Request>, prioQ_compare> prioQ)
         prioQ.pop(); // Pops off the prioQ
     }
 };
+
+Network::~Network()
+{
+    closeSockets(sockets,master_socket);
+}
+
