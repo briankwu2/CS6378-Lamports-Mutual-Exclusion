@@ -1,3 +1,10 @@
+# WARNING
+---
+This project is non-functional. Issues arose where multi-threading would not work well and so this project was scrapped
+and instead re-built in Java to allow ease for Sockets and Threading and concurrency.
+See CS6378_Project2_Java instead for the implementation of the CL Mutual Exclusion protocol.
+
+
 # Group Members
 Brian Wu bkw180001
 Nick Herzberg ndh180001
